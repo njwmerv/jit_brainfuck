@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <errno.h>
 #include <stdbool.h>
 #include <unistd.h>
 #include <stdint.h>
@@ -10,7 +9,7 @@
 #define BUF_SIZE sysconf(_SC_PAGESIZE) * 10
 #define TAPE_SIZE 30000
 
-bool is_brainfuck(char c) {
+static inline bool is_brainfuck(char c) {
 	return c == '>' || c == '<' || c == '+' || c == '-' || c == '[' || c == ']' || c == ',' || c == '.';
 }
 
@@ -60,18 +59,16 @@ int main(int argc, char* argv[]) {
 
 	char* content = read_file(file);
 
-	//////////
-	// PARSE INPUT
-
+	// Validating Input
 	int brack = 0;
 	char* c = content;
 	while (*c) {
-		if (c == '[') brack++;
-		else if (c == ']' && brack <= 0) {
+		if (*c == '[') brack++;
+		else if (*c == ']' && brack <= 0) {
 			printf("ERROR: Unmatched \']\'\n");
 			return -1;
 		}
-		else if (c == ']') brack--;
+		else if (*c == ']') brack--;
 		c++;
 	}
 	if (brack != 0) {
@@ -79,12 +76,10 @@ int main(int argc, char* argv[]) {
 		return -1;
 	}
 
+	// Code Generation
 	void* buffer = mmap(NULL, BUF_SIZE, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 	uint8_t* jit_memory = (uint8_t*) buffer;
 	int jit_idx = 0;
-
-	void* tape = calloc(TAPE_SIZE, 1);
-	void* head = tape + TAPE_SIZE / 2;
 
 	Stack* stack = Stack_Create();
 	c = content;
@@ -121,28 +116,28 @@ int main(int argc, char* argv[]) {
 				break;
 			case '[':
 				jit_memory[jit_idx++] = 0x41;
-    				jit_memory[jit_idx++] = 0x80;
-    				jit_memory[jit_idx++] = 0x3C;
-    				jit_memory[jit_idx++] = 0x24;
-    				jit_memory[jit_idx++] = 0x00;
-    				jit_memory[jit_idx++] = 0x0F;
-    				jit_memory[jit_idx++] = 0x84;
+				jit_memory[jit_idx++] = 0x80;
+				jit_memory[jit_idx++] = 0x3C;
+				jit_memory[jit_idx++] = 0x24;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x0F;
+				jit_memory[jit_idx++] = 0x84;
 
 				int32_t* addr = malloc(sizeof(int32_t));
 				*addr = jit_idx;
 				Stack_Push(stack, addr);
 
-    				jit_memory[jit_idx++] = 0x00;
-    				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
 				break;
 			case ']':
 				jit_memory[jit_idx++] = 0x41;
-			    	jit_memory[jit_idx++] = 0x80;
-    				jit_memory[jit_idx++] = 0x3C;
-    				jit_memory[jit_idx++] = 0x24;
-    				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x80;
+				jit_memory[jit_idx++] = 0x3C;
+				jit_memory[jit_idx++] = 0x24;
+				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x0F;
 				jit_memory[jit_idx++] = 0x85;
 
@@ -160,48 +155,48 @@ int main(int argc, char* argv[]) {
 				break;
 			case '.':
 				jit_memory[jit_idx++] = 0xB8;
-                		jit_memory[jit_idx++] = 0x01;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0xBF;
-                		jit_memory[jit_idx++] = 0x01;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x4C;
-                		jit_memory[jit_idx++] = 0x89;
-                		jit_memory[jit_idx++] = 0xE6;
-                		jit_memory[jit_idx++] = 0xBA;
-                		jit_memory[jit_idx++] = 0x01;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x0F;
-                		jit_memory[jit_idx++] = 0x05;
-                		break;
-        		case ',':
-                		jit_memory[jit_idx++] = 0xB8;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0xBF;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x4C;
-                		jit_memory[jit_idx++] = 0x89;
-                		jit_memory[jit_idx++] = 0xE6;
-                		jit_memory[jit_idx++] = 0xBA;
-                		jit_memory[jit_idx++] = 0x01;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x00;
-                		jit_memory[jit_idx++] = 0x0F;
-                		jit_memory[jit_idx++] = 0x05;
-                		break;
+				jit_memory[jit_idx++] = 0x01;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0xBF;
+				jit_memory[jit_idx++] = 0x01;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x4C;
+				jit_memory[jit_idx++] = 0x89;
+				jit_memory[jit_idx++] = 0xE6;
+				jit_memory[jit_idx++] = 0xBA;
+				jit_memory[jit_idx++] = 0x01;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x0F;
+				jit_memory[jit_idx++] = 0x05;
+				break;
+			case ',':
+				jit_memory[jit_idx++] = 0xB8;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0xBF;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x4C;
+				jit_memory[jit_idx++] = 0x89;
+				jit_memory[jit_idx++] = 0xE6;
+				jit_memory[jit_idx++] = 0xBA;
+				jit_memory[jit_idx++] = 0x01;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x00;
+				jit_memory[jit_idx++] = 0x0F;
+				jit_memory[jit_idx++] = 0x05;
+				break;
 		}
 		c++;
 	}
@@ -211,24 +206,17 @@ int main(int argc, char* argv[]) {
 	// ret
 	jit_memory[jit_idx++] = 0xC3;
 
-	//////////
 	// EXECUTION
-	printf("Beginning Execution of: %s...", argv[1]);
-	void (*execute_jit)(void*) = (void (*)(void*)) buffer;
+	void* tape = calloc(TAPE_SIZE, 1);
+	void* head = tape + TAPE_SIZE / 2;
 
+	void (*execute_jit)(void*) = (void (*)(void*)) buffer;
 	execute_jit(head);
 
-	printf("Execution Complete!\n");
-	
-	//////////
 	// CLEANUP
-	
 	munmap(buffer, BUF_SIZE);
-
 	free(content);
-
 	free(tape);
-
 	fclose(file);
 	return 0;
 }

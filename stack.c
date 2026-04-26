@@ -1,4 +1,4 @@
-#inlucde "stack.h"
+#include "stack.h"
 
 struct Node {
 	void* data;

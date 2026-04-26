@@ -96,54 +96,63 @@ int main(int argc, char* argv[]) {
 	while (*c) {
 		switch (*c) {
 			case '>':
+				// inc r12
 				jit_memory[jit_idx++] = 0x49;
 				jit_memory[jit_idx++] = 0xFF;
 				jit_memory[jit_idx++] = 0xC4;
 				break;
 			case '<':
+				// dec r12
 				jit_memory[jit_idx++] = 0x49;
 				jit_memory[jit_idx++] = 0xFF;
 				jit_memory[jit_idx++] = 0xCC;
 				break;
 			case '+':
+				// inc byte ptr [r12]
   				jit_memory[jit_idx++] = 0x41;
 				jit_memory[jit_idx++] = 0xFE;
 				jit_memory[jit_idx++] = 0x04;
 				jit_memory[jit_idx++] = 0x24;
 				break;
 			case '-':
+				// dec byte ptr [r12]
 				jit_memory[jit_idx++] = 0x41;
 				jit_memory[jit_idx++] = 0xFE;
 				jit_memory[jit_idx++] = 0x0C;
 				jit_memory[jit_idx++] = 0x24;
 				break;
 			case '[':
+				// cmp byte ptr [r12], 0
 				jit_memory[jit_idx++] = 0x41;
 				jit_memory[jit_idx++] = 0x80;
 				jit_memory[jit_idx++] = 0x3C;
 				jit_memory[jit_idx++] = 0x24;
 				jit_memory[jit_idx++] = 0x00;
+				// je ...
 				jit_memory[jit_idx++] = 0x0F;
 				jit_memory[jit_idx++] = 0x84;
 
+				// offset placeholder
 				int32_t* addr = malloc(sizeof(int32_t));
 				*addr = jit_idx;
 				Stack_Push(stack, addr);
-
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
 				break;
 			case ']':
+				// cmp byte ptr [r12], 0
 				jit_memory[jit_idx++] = 0x41;
 				jit_memory[jit_idx++] = 0x80;
 				jit_memory[jit_idx++] = 0x3C;
 				jit_memory[jit_idx++] = 0x24;
 				jit_memory[jit_idx++] = 0x00;
+				// jne ...
 				jit_memory[jit_idx++] = 0x0F;
 				jit_memory[jit_idx++] = 0x85;
 
+				// offset
 				int jump_end = jit_idx + 4;
 				int32_t* block_start = Stack_Pop(stack);
 
@@ -157,46 +166,56 @@ int main(int argc, char* argv[]) {
 				free(block_start);
 				break;
 			case '.':
+				// mov eax, 1
 				jit_memory[jit_idx++] = 0xB8;
 				jit_memory[jit_idx++] = 0x01;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
+				// mov edi, 1
 				jit_memory[jit_idx++] = 0xBF;
 				jit_memory[jit_idx++] = 0x01;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
+				// mov rsi, r12
 				jit_memory[jit_idx++] = 0x4C;
 				jit_memory[jit_idx++] = 0x89;
 				jit_memory[jit_idx++] = 0xE6;
+				// mov edx, 1
 				jit_memory[jit_idx++] = 0xBA;
 				jit_memory[jit_idx++] = 0x01;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
+				// syscall
 				jit_memory[jit_idx++] = 0x0F;
 				jit_memory[jit_idx++] = 0x05;
 				break;
 			case ',':
+				// mov eax, 0
 				jit_memory[jit_idx++] = 0xB8;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
+				// mov edi, 0
 				jit_memory[jit_idx++] = 0xBF;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
+				// mov rsi, r12
 				jit_memory[jit_idx++] = 0x4C;
 				jit_memory[jit_idx++] = 0x89;
 				jit_memory[jit_idx++] = 0xE6;
+				// mov edx, 1
 				jit_memory[jit_idx++] = 0xBA;
 				jit_memory[jit_idx++] = 0x01;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
 				jit_memory[jit_idx++] = 0x00;
+				// syscall
 				jit_memory[jit_idx++] = 0x0F;
 				jit_memory[jit_idx++] = 0x05;
 				break;

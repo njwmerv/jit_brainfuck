@@ -15,14 +15,14 @@ static inline bool is_brainfuck(char c) {
 
 char* read_file(FILE* file) {
 	fseek(file, 0, SEEK_END);
-	long len = ftell(file);
+	unsigned long len = ftell(file);
 	fseek(file, 0, SEEK_SET);
 
 	char* content = malloc(len + 1);
-	if (content) {
-		fread(content, 1, len, file);
-		content[len] = '\0';
-	}
+    if (content == NULL) return NULL;
+
+    size_t bytes_read = fread(content, 1, len, file);
+    content[bytes_read] = '\0';
 
 	char* read = content;
 	char* write = content;
@@ -58,6 +58,9 @@ int main(int argc, char* argv[]) {
 	}
 
 	char* content = read_file(file);
+    if (content == NULL) {
+        printf("ERROR: Failed to read file: %s\n", argv[1]);
+    }
 
 	// Validating Input
 	int brack = 0;
@@ -216,6 +219,7 @@ int main(int argc, char* argv[]) {
 	// CLEANUP
 	munmap(buffer, BUF_SIZE);
 	free(content);
+	free(stack);
 	free(tape);
 	fclose(file);
 	return 0;

@@ -17,4 +17,6 @@ Expected Output:
 Hello World!
 ```
 
+NOTE: The compiled code is limited to the size of 10 pages, and the head starts in the middle of a 30,000 long tape.
+
 Have fun!

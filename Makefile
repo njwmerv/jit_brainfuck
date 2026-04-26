@@ -9,5 +9,6 @@ $(NAME): main.c stack.o
 stack.o:
 	$(CC) stack.c -c
 
+.PHONY: clean
 clean:
 	rm -f stack.o bf_jit
